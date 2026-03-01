@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>受験生 成績管理システム</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --ink:    #0f1117;
+  --ink2:   #161922;
+  --ink3:   #1e2230;
+  --line:   #2b2f42;
+  --muted:  #636882;
+  --text:   #e6e9f8;
+  --text2:  #9aa0c4;
+  --amber:  #f5c842;
+  --green:  #3dd68c;
+  --red:    #f2617a;
+  --blue:   #4ec9f0;
+  --indigo: #7c83d3;
+  --pink:   #e040a0;
+  --r: 12px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Zen Kaku Gothic New',sans-serif;background:var(--ink);color:var(--text);min-height:100vh;}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;
+  background:radial-gradient(ellipse at 20% 50%,rgba(124,131,211,.12) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,rgba(245,200,66,.06) 0%,transparent 50%),
+             var(--ink);
+}
+.login-box{
+  width:420px;max-width:92vw;
+  background:var(--ink2);border:1px solid var(--line);border-radius:20px;
+  padding:40px 36px;
+  animation:fadeUp .4s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-logo-mark{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--indigo);text-transform:uppercase;margin-bottom:8px;}
+.login-logo-text{font-size:22px;font-weight:900;line-height:1.2;}
+.login-logo-text span{color:var(--amber);}
+.role-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:28px;background:var(--ink3);border-radius:10px;padding:4px;}
+.role-tab{padding:10px;border:none;border-radius:8px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;background:none;color:var(--muted);}
+.role-tab.active{background:var(--ink2);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.4);}
+.login-field{margin-bottom:16px;}
+.login-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;}
+.login-field input{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;outline:none;transition:border-color .18s;}
+.login-field input:focus{border-color:var(--indigo);}
+.login-btn{width:100%;padding:13px;border:none;border-radius:10px;background:var(--amber);color:var(--ink);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;font-weight:900;cursor:pointer;transition:all .18s;margin-top:4px;}
+.login-btn:hover{background:#ffd966;transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,200,66,.3);}
+.login-err{color:var(--red);font-size:12px;margin-top:10px;text-align:center;min-height:18px;}
+.login-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.7;}
+.login-hint b{color:var(--text2);}
+
+/* ── APP SHELL ── */
+#app{display:none;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--ink2);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:50;}
+.sidebar-top{padding:22px 18px 18px;border-bottom:1px solid var(--line);}
+.s-role-badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-bottom:10px;display:inline-block;}
+.s-role-badge.teacher{background:rgba(245,200,66,.12);color:var(--amber);}
+.s-role-badge.student{background:rgba(62,214,140,.12);color:var(--green);}
+.s-username{font-size:16px;font-weight:900;margin-bottom:2px;}
+.s-sub{font-size:11px;color:var(--muted);}
+nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{color:var(--text);background:var(--ink3);}
+.nav-item.active{color:var(--amber);background:rgba(245,200,66,.08);}
+.nav-item.student-active{color:var(--green);background:rgba(62,214,140,.08);}
+.nav-icon{font-size:15px;width:20px;text-align:center;}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--line);}
+.logout-btn{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--muted);font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;cursor:pointer;transition:all .18s;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+.main{margin-left:220px;min-height:100vh;}
+.topbar{padding:18px 30px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:var(--ink2);position:sticky;top:0;z-index:40;}
+.page-title{font-size:19px;font-weight:900;}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.topbar-r{display:flex;gap:8px;align-items:center;}
+.content{padding:26px 30px;}
+
+/* ── PAGE ── */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.btn-amber{background:var(--amber);color:var(--ink);}
+.btn-amber:hover{background:#ffd966;transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,200,66,.3);}
+.btn-green{background:var(--green);color:var(--ink);}
+.btn-green:hover{background:#5eebb0;}
+.btn-ghost{background:none;border:1px solid var(--line);color:var(--text2);}
+.btn-ghost:hover{border-color:var(--indigo);color:var(--indigo);}
+.btn-danger{background:rgba(242,97,122,.1);color:var(--red);border:1px solid rgba(242,97,122,.22);}
+.btn-danger:hover{background:rgba(242,97,122,.2);}
+.btn-indigo{background:rgba(124,131,211,.15);color:var(--indigo);border:1px solid rgba(124,131,211,.25);}
+.btn-indigo:hover{background:rgba(124,131,211,.25);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+
+/* ── CARDS ── */
+.card{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);padding:20px;}
+.card-hd{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.kpi{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi:nth-child(1)::after{background:var(--amber);}
+.kpi:nth-child(2)::after{background:var(--green);}
+.kpi:nth-child(3)::after{background:var(--blue);}
+.kpi:nth-child(4)::after{background:var(--red);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.kpi-val{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;line-height:1;}
+.kpi:nth-child(1) .kpi-val{color:var(--amber);}
+.kpi:nth-child(2) .kpi-val{color:var(--green);}
+.kpi:nth-child(3) .kpi-val{color:var(--blue);}
+.kpi:nth-child(4) .kpi-val{color:var(--red);}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;}
+td{padding:12px 12px;border-bottom:1px solid rgba(43,47,66,.5);font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(124,131,211,.03);}
+
+/* ── SCORE / GAP ── */
+.sp{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;padding:2px 9px;border-radius:6px;}
+.sp-over{background:rgba(61,214,140,.1);color:var(--green);}
+.sp-close{background:rgba(245,200,66,.1);color:var(--amber);}
+.sp-far{background:rgba(242,97,122,.1);color:var(--red);}
+.gap{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.gap-p{background:rgba(61,214,140,.1);color:var(--green);}
+.gap-m{background:rgba(242,97,122,.1);color:var(--red);}
+.gap-z{background:rgba(245,200,66,.1);color:var(--amber);}
+
+/* ── FORM ── */
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
+.fi{display:flex;flex-direction:column;gap:5px;}
+.fi.full{grid-column:1/-1;}
+label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+input,select,textarea{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;outline:none;transition:border-color .18s;}
+input:focus,select:focus,textarea:focus{border-color:var(--indigo);}
+select option{background:var(--ink2);}
+textarea{resize:vertical;min-height:64px;}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(8,9,16,.88);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.overlay.open{display:flex;}
+.modal{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:26px;width:540px;max-width:93vw;max-height:88vh;overflow-y:auto;animation:slideUp .22s ease;}
+@keyframes slideUp{from{transform:translateY(18px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.modal-title{font-size:16px;font-weight:900;}
+.modal-x{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 7px;border-radius:4px;}
+.modal-x:hover{color:var(--text);}
+
+/* ── GOAL ITEM ── */
+.goal-item{background:var(--ink3);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;margin-bottom:8px;}
+.gdot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.gdone .gdot{background:var(--green);}
+.gwip .gdot{background:var(--amber);box-shadow:0 0 7px rgba(245,200,66,.5);}
+.gtodo .gdot{background:var(--muted);}
+.gbadge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.gdone .gbadge{background:rgba(61,214,140,.1);color:var(--green);}
+.gwip .gbadge{background:rgba(245,200,66,.1);color:var(--amber);}
+.gtodo .gbadge{background:rgba(99,104,130,.2);color:var(--muted);}
+
+/* ── STUDENT CARD ── */
+.stu-card{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);padding:18px;transition:all .18s;}
+.stu-card:hover{border-color:var(--indigo);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+
+/* ── COMMENT THREAD ── */
+.comment-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.comment-item{background:var(--ink3);border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+.comment-meta{font-size:11px;color:var(--muted);margin-bottom:5px;display:flex;gap:8px;align-items:center;}
+.comment-role-t{color:var(--amber);font-weight:700;}
+.comment-role-s{color:var(--green);font-weight:700;}
+.comment-body{font-size:13px;line-height:1.6;}
+
+/* ── CHART ── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.chart-box{background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);padding:20px;}
+.chart-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
+.chart-h{position:relative;height:230px;}
+
+/* ── PROG BAR ── */
+.pb-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.pb-label{font-size:12px;width:48px;flex-shrink:0;}
+.pb-track{flex:1;height:5px;background:var(--ink3);border-radius:3px;overflow:hidden;}
+.pb-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+.pb-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;width:34px;text-align:right;}
+
+/* ── TAG ── */
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.tag-b{background:rgba(78,201,240,.1);color:var(--blue);}
+.tag-i{background:rgba(124,131,211,.12);color:var(--indigo);}
+.tag-g{background:rgba(61,214,140,.1);color:var(--green);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink3);border:1px solid var(--line);border-radius:10px;padding:11px 16px;font-size:13px;transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:999;display:flex;align-items:center;gap:8px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-left:3px solid var(--green);}
+.toast.ng{border-left:3px solid var(--red);}
+
+/* ── STUDENT VIEW BANNER ── */
+.stu-welcome{background:linear-gradient(135deg,rgba(61,214,140,.08),rgba(78,201,240,.06));border:1px solid rgba(61,214,140,.2);border-radius:14px;padding:22px 26px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.stu-welcome-name{font-size:20px;font-weight:900;margin-bottom:4px;}
+.stu-welcome-sub{font-size:13px;color:var(--text2);}
+.stu-welcome-score{text-align:right;}
+
+/* UTILITIES */
+.flex{display:flex;}.ic{align-items:center;}.jb{justify-content:space-between;}.g2{gap:8px;}.g3{gap:12px;}.mb3{margin-bottom:12px;}.mb4{margin-bottom:16px;}.mb5{margin-bottom:20px;}.mt4{margin-top:16px;}.muted{color:var(--muted);font-size:12px;}.divider{height:1px;background:var(--line);margin:16px 0;}.empty{text-align:center;padding:44px;color:var(--muted);}.ei{font-size:32px;margin-bottom:10px;}
+
+@media print{.sidebar,.topbar-r,.no-print{display:none!important;}.main{margin-left:0;}body{background:#fff;color:#000;}}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+     LOGIN SCREEN
+════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-mark">JUKEN.SYS v2</div>
+      <div class="login-logo-text">受験生<span>成績管理</span></div>
+    </div>
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="setRole('teacher')" id="tab-teacher">👨‍🏫 講師</button>
+      <button class="role-tab" onclick="setRole('student')" id="tab-student">🎓 生徒</button>
+    </div>
+    <div class="login-field">
+      <label>ユーザーID</label>
+      <input type="text" id="login-id" placeholder="IDを入力" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>パスワード</label>
+      <input type="password" id="login-pw" placeholder="パスワードを入力" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <button class="login-btn" onclick="doLogin()">ログイン</button>
+    <div class="login-hint" id="login-hint">
+      デモ用 講師ID: <b>teacher</b> / PW: <b>1234</b><br>
+      生徒IDは講師画面で確認・設定できます
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     APP SHELL
+════════════════════════════ -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="s-role-badge" id="sb-badge">講師</div>
+      <div class="s-username" id="sb-name">—</div>
+      <div class="s-sub" id="sb-sub">—</div>
+    </div>
+    <nav id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">← ログアウト</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <!-- ── TEACHER PAGES ── -->
+
+    <!-- Dashboard -->
+    <div class="page" id="page-t-dashboard">
+      <div class="topbar"><div><div class="page-title">ダッシュボード</div><div class="page-sub">全生徒の学習状況</div></div></div>
+      <div class="content">
+        <div class="kpi-row" id="t-kpi"></div>
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:14px;">
+          <div class="card"><div class="card-hd">最近の過去問記録</div><div class="tbl-wrap"><table><thead><tr><th>生徒</th><th>大学・学部</th><th>科目</th><th>年度</th><th>得点</th><th>合否差</th></tr></thead><tbody id="t-recent"></tbody></table></div></div>
+          <div class="card"><div class="card-hd">科目別 合格ライン達成率</div><div id="t-subj-bars"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Students -->
+    <div class="page" id="page-t-students">
+      <div class="topbar"><div><div class="page-title">生徒管理</div><div class="page-sub">生徒の登録・ログイン情報の設定</div></div><div class="topbar-r no-print"><button class="btn btn-amber" onclick="openStuModal()">＋ 生徒を追加</button></div></div>
+      <div class="content"><div id="stu-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div></div>
+    </div>
+
+    <!-- Past Exams (teacher) -->
+    <div class="page" id="page-t-pastexams">
+      <div class="topbar"><div><div class="page-title">過去問記録</div><div class="page-sub">全生徒の過去問成績</div></div>
+        <div class="topbar-r no-print">
+          <select id="t-pe-fs" onchange="renderTPE()" style="font-size:12px;padding:7px 11px;min-width:120px;"><option value="">全生徒</option></select>
+          <select id="t-pe-fsub" onchange="renderTPE()" style="font-size:12px;padding:7px 11px;"><option value="">全科目</option></select>
+          <button class="btn btn-amber" onclick="openPEModal()">＋ 記録追加</button>
+        </div>
+      </div>
+      <div class="content">
+        <div id="t-pe-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
+        <div class="card"><div class="tbl-wrap"><table><thead><tr><th>生徒</th><th>大学・学部</th><th>科目</th><th>年度</th><th>得点</th><th>平均点</th><th>合格点</th><th>合否差</th><th>コメント</th><th></th></tr></thead><tbody id="t-pe-tbody"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- Goals (teacher) -->
+    <div class="page" id="page-t-goals">
+      <div class="topbar"><div><div class="page-title">中期目標管理</div><div class="page-sub">生徒ごとの目標設定・追跡</div></div>
+        <div class="topbar-r no-print">
+          <select id="t-g-fs" onchange="renderTGoals()" style="font-size:12px;padding:7px 11px;min-width:120px;"><option value="">全生徒</option></select>
+          <button class="btn btn-amber" onclick="openGoalModal()">＋ 目標追加</button>
+        </div>
+      </div>
+      <div class="content" id="t-goals-content"></div>
+    </div>
+
+    <!-- Analysis -->
+    <div class="page" id="page-t-analysis">
+      <div class="topbar"><div><div class="page-title">分析・グラフ</div><div class="page-sub">成績データの視覚分析</div></div>
+        <div class="topbar-r"><select id="t-ana-fs" onchange="renderAnalysis()" style="font-size:12px;padding:7px 11px;min-width:120px;"><option value="">全生徒</option></select></div>
+      </div>
+      <div class="content">
+        <div class="chart-grid mb4" style="margin-bottom:14px;">
+          <div class="chart-box"><div class="chart-title">科目別 得点 vs 合格点</div><div class="chart-h"><canvas id="c-subj"></canvas></div></div>
+          <div class="chart-box"><div class="chart-title">合否差の推移</div><div class="chart-h"><canvas id="c-trend"></canvas></div></div>
+        </div>
+        <div class="chart-grid">
+          <div class="chart-box"><div class="chart-title">大学別 突破率</div><div class="chart-h"><canvas id="c-univ"></canvas></div></div>
+          <div class="chart-box"><div class="chart-title">得点率分布</div><div class="chart-h"><canvas id="c-dist"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report -->
+    <div class="page" id="page-t-report">
+      <div class="topbar"><div><div class="page-title">レポート出力</div><div class="page-sub">生徒別 詳細レポート</div></div>
+        <div class="topbar-r no-print">
+          <select id="t-rep-fs" onchange="renderReport()" style="font-size:12px;padding:7px 11px;min-width:120px;"><option value="">全生徒</option></select>
+          <button class="btn btn-green" onclick="window.print()">🖨 PDF保存</button>
+        </div>
+      </div>
+      <div class="content" id="t-report-content"></div>
+    </div>
+
+    <!-- ── STUDENT PAGES ── -->
+
+    <!-- Student Dashboard -->
+    <div class="page" id="page-s-dashboard">
+      <div class="topbar"><div><div class="page-title">マイダッシュボード</div><div class="page-sub">自分の成績・目標を確認</div></div></div>
+      <div class="content">
+        <div class="stu-welcome" id="s-welcome"></div>
+        <div class="kpi-row" id="s-kpi"></div>
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:14px;">
+          <div class="card"><div class="card-hd">過去問記録</div><div class="tbl-wrap"><table><thead><tr><th>大学・学部</th><th>科目</th><th>年度</th><th>得点</th><th>平均点</th><th>合格点</th><th>合否差</th><th>解答日</th></tr></thead><tbody id="s-pe-tbody"></tbody></table></div></div>
+          <div class="card"><div class="card-hd">科目別 達成率</div><div id="s-subj-bars"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Add PE -->
+    <div class="page" id="page-s-addpe">
+      <div class="topbar"><div><div class="page-title">過去問を記録する</div><div class="page-sub">自分で解いた過去問の結果を追加</div></div></div>
+      <div class="content">
+        <div class="card" style="max-width:620px;">
+          <div class="card-hd">新しい記録を追加</div>
+          <div class="fg mb4">
+            <div class="fi"><label>大学名 *</label><input type="text" id="s-p-univ" placeholder="例: 早稲田大学"></div>
+            <div class="fi"><label>学部・学科</label><input type="text" id="s-p-dept" placeholder="例: 法学部"></div>
+            <div class="fi"><label>科目 *</label>
+              <select id="s-p-subject">
+                <option>数学</option><option>英語</option><option>国語</option><option>物理</option>
+                <option>化学</option><option>生物</option><option>地理</option><option>日本史</option>
+                <option>世界史</option><option>政治経済</option><option>倫理</option><option>情報</option>
+              </select>
+            </div>
+            <div class="fi"><label>年度 *</label><input type="text" id="s-p-year" placeholder="例: 2024"></div>
+            <div class="fi"><label>解答日</label><input type="date" id="s-p-date"></div>
+            <div class="fi"><label>自分の得点 *</label><input type="number" id="s-p-score" placeholder="72" min="0"></div>
+            <div class="fi"><label>満点</label><input type="number" id="s-p-max" placeholder="100" min="1"></div>
+            <div class="fi"><label>過去の平均点</label><input type="number" id="s-p-avg" placeholder="55"></div>
+            <div class="fi"><label>合格ライン *</label><input type="number" id="s-p-pass" placeholder="65" min="0"></div>
+            <div class="fi full"><label>コメント・気づき</label><textarea id="s-p-comment" placeholder="解いた感想、弱点など自由に"></textarea></div>
+          </div>
+          <button class="btn btn-green" onclick="saveStuPE()">✓ 記録を保存</button>
+        </div>
+        <div class="card mt4" style="max-width:620px;">
+          <div class="card-hd">最近の自分の記録</div>
+          <div class="tbl-wrap"><table><thead><tr><th>大学</th><th>科目</th><th>年度</th><th>得点</th><th>合否差</th><th>日付</th><th></th></tr></thead><tbody id="s-myrecords"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Goals -->
+    <div class="page" id="page-s-goals">
+      <div class="topbar"><div><div class="page-title">中期目標</div><div class="page-sub">先生から設定された学習目標</div></div></div>
+      <div class="content" id="s-goals-content"></div>
+    </div>
+
+    <!-- Student Comments -->
+    <div class="page" id="page-s-comments">
+      <div class="topbar"><div><div class="page-title">コメント・メモ</div><div class="page-sub">講師とのやりとり・自分のメモ</div></div></div>
+      <div class="content">
+        <div style="max-width:680px;">
+          <div class="card mb4">
+            <div class="card-hd">新しいコメントを追加</div>
+            <textarea id="s-comment-input" placeholder="質問・感想・メモを入力..." style="width:100%;margin-bottom:10px;"></textarea>
+            <button class="btn btn-green btn-sm" onclick="addStuComment()">✓ 投稿</button>
+          </div>
+          <div class="card"><div class="card-hd">コメント一覧</div><div class="comment-list" id="s-comment-list"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ════ MODALS ════ -->
+
+<!-- Student Modal (teacher) -->
+<div class="overlay" id="modal-stu">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title" id="sm-title">生徒を追加</div><button class="modal-x" onclick="closeM('modal-stu')">✕</button></div>
+    <div class="fg">
+      <div class="fi"><label>氏名 *</label><input type="text" id="sm-name" placeholder="山田 太郎"></div>
+      <div class="fi"><label>志望校</label><input type="text" id="sm-school" placeholder="東京大学 理学部"></div>
+      <div class="fi"><label>学年</label>
+        <select id="sm-grade"><option>高校3年</option><option>高校2年</option><option>高校1年</option><option>浪人1年目</option><option>浪人2年目以上</option></select>
+      </div>
+      <div class="fi"><label>受験年度</label><input type="text" id="sm-year" placeholder="2025"></div>
+      <div class="fi"><label>担当講師</label><input type="text" id="sm-teacher" placeholder="鈴木先生"></div>
+      <div class="fi"></div>
+      <div style="grid-column:1/-1;background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.2);border-radius:10px;padding:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">🔑 ログイン情報</div>
+        <div class="fg">
+          <div class="fi"><label>生徒ログインID *</label><input type="text" id="sm-lid" placeholder="例: student01"></div>
+          <div class="fi"><label>パスワード *</label><input type="text" id="sm-lpw" placeholder="例: pass1234"></div>
+        </div>
+      </div>
+      <div class="fi full"><label>メモ</label><textarea id="sm-note" placeholder="生徒に関するメモ"></textarea></div>
+    </div>
+    <div class="flex g2 mt4"><button class="btn btn-amber" onclick="saveStu()" style="flex:1">保存</button><button class="btn btn-ghost" onclick="closeM('modal-stu')">キャンセル</button></div>
+  </div>
+</div>
+
+<!-- PastExam Modal (teacher) -->
+<div class="overlay" id="modal-pe">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title" id="pm-title">過去問記録を追加</div><button class="modal-x" onclick="closeM('modal-pe')">✕</button></div>
+    <div class="fg">
+      <div class="fi"><label>生徒 *</label><select id="pm-stu"></select></div>
+      <div class="fi"><label>大学名 *</label><input type="text" id="pm-univ" placeholder="東京大学"></div>
+      <div class="fi"><label>学部・学科</label><input type="text" id="pm-dept" placeholder="前期 理科1類"></div>
+      <div class="fi"><label>科目 *</label>
+        <select id="pm-subj"><option>数学</option><option>英語</option><option>国語</option><option>物理</option><option>化学</option><option>生物</option><option>地理</option><option>日本史</option><option>世界史</option><option>政治経済</option><option>倫理</option><option>情報</option></select>
+      </div>
+      <div class="fi"><label>年度 *</label><input type="text" id="pm-year" placeholder="2024"></div>
+      <div class="fi"><label>解答日</label><input type="date" id="pm-date"></div>
+      <div class="fi"><label>得点 *</label><input type="number" id="pm-score" placeholder="72" min="0"></div>
+      <div class="fi"><label>満点</label><input type="number" id="pm-max" placeholder="100" min="1"></div>
+      <div class="fi"><label>過去の平均点</label><input type="number" id="pm-avg" placeholder="55"></div>
+      <div class="fi"><label>合格ライン *</label><input type="number" id="pm-pass" placeholder="65" min="0"></div>
+      <div class="fi full"><label>コメント</label><textarea id="pm-comment" placeholder="気づき・弱点など"></textarea></div>
+    </div>
+    <div class="flex g2 mt4"><button class="btn btn-amber" onclick="savePE()" style="flex:1">保存</button><button class="btn btn-ghost" onclick="closeM('modal-pe')">キャンセル</button></div>
+  </div>
+</div>
+
+<!-- Goal Modal (teacher) -->
+<div class="overlay" id="modal-goal">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title" id="gm-title">中期目標を追加</div><button class="modal-x" onclick="closeM('modal-goal')">✕</button></div>
+    <div class="fg">
+      <div class="fi"><label>生徒 *</label><select id="gm-stu"></select></div>
+      <div class="fi"><label>目標タイプ</label>
+        <select id="gm-type"><option>科目強化</option><option>模試目標</option><option>過去問目標</option><option>学習習慣</option><option>弱点克服</option><option>その他</option></select>
+      </div>
+      <div class="fi full"><label>目標内容 *</label><textarea id="gm-text" placeholder="例: 数学の微積を完璧にする"></textarea></div>
+      <div class="fi"><label>達成期限</label><input type="date" id="gm-deadline"></div>
+      <div class="fi"><label>ステータス</label>
+        <select id="gm-status"><option value="todo">未着手</option><option value="wip">進行中</option><option value="done">達成</option></select>
+      </div>
+      <div class="fi full"><label>進捗メモ</label><textarea id="gm-note" placeholder="進捗状況など"></textarea></div>
+    </div>
+    <div class="flex g2 mt4"><button class="btn btn-amber" onclick="saveGoal()" style="flex:1">保存</button><button class="btn btn-ghost" onclick="closeM('modal-goal')">キャンセル</button></div>
+  </div>
+</div>
+
+<!-- Teacher Comment Modal -->
+<div class="overlay" id="modal-tcomment">
+  <div class="modal" style="width:500px;">
+    <div class="modal-hd"><div class="modal-title">コメントを追加</div><button class="modal-x" onclick="closeM('modal-tcomment')">✕</button></div>
+    <div class="fi mb4"><label>生徒 *</label><select id="tc-stu"></select></div>
+    <div class="fi mb4"><label>コメント *</label><textarea id="tc-body" placeholder="生徒へのメッセージ・フィードバック" style="min-height:80px;width:100%;"></textarea></div>
+    <div class="flex g2 mt4"><button class="btn btn-amber" onclick="saveTComment()" style="flex:1">送信</button><button class="btn btn-ghost" onclick="closeM('modal-tcomment')">キャンセル</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATA
+══════════════════════════════════════════ */
+let DB = {
+  students: [],
+  pastExams: [],
+  goals: [],
+  comments: [],
+};
+
+function load() {
+  const raw = localStorage.getItem('jk2_db');
+  if (raw) { try { DB = JSON.parse(raw); } catch(e){} }
+}
+function save() { localStorage.setItem('jk2_db', JSON.stringify(DB)); }
+load();
+
+// Seed if empty
+if (!DB.students.length) {
+  DB.students = [
+    { id:1, name:'田中 翔',  school:'東京大学 理学部',      grade:'高校3年', year:'2025', teacher:'山本先生', note:'数学得意。英語が課題。',      lid:'tanaka',   lpw:'pass123' },
+    { id:2, name:'佐藤 美咲', school:'慶應義塾大学 医学部',   grade:'高校3年', year:'2025', teacher:'鈴木先生', note:'全体的にバランス良い。',      lid:'sato',     lpw:'pass123' },
+    { id:3, name:'山口 健人', school:'早稲田大学 法学部',     grade:'浪人1年目',year:'2025', teacher:'田村先生', note:'昨年惜しくも不合格。リベンジ。', lid:'yamaguchi', lpw:'pass123' },
+  ];
+  DB.pastExams = [
+    { id:1,  sid:1, univ:'東京大学', dept:'前期 理科1類', subj:'数学', year:'2023', date:'2024-04-10', score:78, max:120, avg:52, pass:70, comment:'微積はOK、整数に課題' },
+    { id:2,  sid:1, univ:'東京大学', dept:'前期 理科1類', subj:'英語', year:'2023', date:'2024-04-15', score:56, max:120, avg:61, pass:72, comment:'長文読解スピード不足' },
+    { id:3,  sid:1, univ:'東京大学', dept:'前期 理科1類', subj:'物理', year:'2023', date:'2024-04-20', score:82, max:120, avg:60, pass:68, comment:'電磁気は完璧' },
+    { id:4,  sid:2, univ:'慶應義塾大学', dept:'医学部', subj:'化学', year:'2023', date:'2024-04-12', score:88, max:100, avg:64, pass:75, comment:'有機化学得意' },
+    { id:5,  sid:2, univ:'慶應義塾大学', dept:'医学部', subj:'英語', year:'2023', date:'2024-04-16', score:72, max:100, avg:70, pass:78, comment:'英作文を強化中' },
+    { id:6,  sid:3, univ:'早稲田大学', dept:'法学部', subj:'国語', year:'2023', date:'2024-04-11', score:61, max:100, avg:55, pass:65, comment:'現代文はまずまず' },
+    { id:7,  sid:3, univ:'早稲田大学', dept:'法学部', subj:'世界史', year:'2023', date:'2024-04-18', score:74, max:100, avg:58, pass:68, comment:'近現代史を強化' },
+  ];
+  DB.goals = [
+    { id:1, sid:1, type:'科目強化', text:'英語長文を毎日1題こなす（4月中）', deadline:'2024-04-30', status:'done', note:'達成。スピードが上がった。' },
+    { id:2, sid:1, type:'模試目標', text:'5月の東大模試で数学90点以上を目指す', deadline:'2024-05-25', status:'wip', note:'過去問で練習中。' },
+    { id:3, sid:2, type:'科目強化', text:'英語の英作文を週3題添削に出す', deadline:'2024-05-31', status:'wip', note:'毎週2〜3題出せている' },
+    { id:4, sid:3, type:'弱点克服', text:'世界史 近現代パートを完全暗記', deadline:'2024-05-10', status:'done', note:'一問一答で確認済み' },
+  ];
+  DB.comments = [
+    { id:1, sid:1, role:'teacher', name:'山本先生', body:'英語の長文対策、順調に進んでいます。引き続き頑張りましょう！', date:'2024-04-20' },
+    { id:2, sid:1, role:'student', name:'田中 翔',  body:'英語の語彙力もっと強化したいのですが、おすすめの方法ありますか？', date:'2024-04-21' },
+    { id:3, sid:2, role:'teacher', name:'鈴木先生', body:'化学の点数が安定してきました。英作文を重点的に！', date:'2024-04-22' },
+  ];
+  save();
+}
+
+/* ══════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════ */
+let currentUser = null; // { role:'teacher'|'student', id, name, ... }
+const TEACHER_ID = 'teacher', TEACHER_PW = '1234';
+let loginRole = 'teacher';
+
+function setRole(r) {
+  loginRole = r;
+  document.getElementById('tab-teacher').classList.toggle('active', r==='teacher');
+  document.getElementById('tab-student').classList.toggle('active', r==='student');
+  document.getElementById('login-hint').innerHTML = r === 'teacher'
+    ? 'デモ用 講師ID: <b>teacher</b> / PW: <b>1234</b>'
+    : 'デモ用 生徒ID: <b>tanaka</b> / PW: <b>pass123</b><br>（他: sato, yamaguchi も同じPW）';
+}
+
+function doLogin() {
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  document.getElementById('login-err').textContent = '';
+
+  if (loginRole === 'teacher') {
+    if (id === TEACHER_ID && pw === TEACHER_PW) {
+      currentUser = { role:'teacher', name:'講師' };
+      startApp();
+    } else {
+      document.getElementById('login-err').textContent = 'IDまたはパスワードが違います';
+    }
+  } else {
+    const stu = DB.students.find(s => s.lid === id && s.lpw === pw);
+    if (stu) {
+      currentUser = { role:'student', ...stu };
+      startApp();
+    } else {
+      document.getElementById('login-err').textContent = 'IDまたはパスワードが違います';
+    }
+  }
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pw').value = '';
+}
+
+function startApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  buildSidebar();
+  refreshAllSelects();
+  if (currentUser.role === 'teacher') {
+    goPage('t-dashboard');
+    renderTDashboard();
+  } else {
+    goPage('s-dashboard');
+    renderStuDashboard();
+  }
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
+function buildSidebar() {
+  const badge = document.getElementById('sb-badge');
+  const nameEl = document.getElementById('sb-name');
+  const subEl = document.getElementById('sb-sub');
+  const nav = document.getElementById('sidebar-nav');
+
+  if (currentUser.role === 'teacher') {
+    badge.textContent = '講師'; badge.className = 's-role-badge teacher';
+    nameEl.textContent = '管理者';
+    subEl.textContent = 'すべての生徒を管理';
+    nav.innerHTML = `
+      <button class="nav-item" onclick="goPage('t-dashboard')" id="nav-t-dashboard"><span class="nav-icon">🏠</span>ダッシュボード</button>
+      <button class="nav-item" onclick="goPage('t-students')" id="nav-t-students"><span class="nav-icon">👥</span>生徒管理</button>
+      <button class="nav-item" onclick="goPage('t-pastexams')" id="nav-t-pastexams"><span class="nav-icon">📄</span>過去問記録</button>
+      <button class="nav-item" onclick="goPage('t-goals')" id="nav-t-goals"><span class="nav-icon">🎯</span>中期目標</button>
+      <button class="nav-item" onclick="goPage('t-analysis')" id="nav-t-analysis"><span class="nav-icon">📊</span>分析・グラフ</button>
+      <button class="nav-item" onclick="openTCommentModal()" id="nav-t-comment"><span class="nav-icon">💬</span>コメントを送る</button>
+      <button class="nav-item" onclick="goPage('t-report')" id="nav-t-report"><span class="nav-icon">📋</span>レポート</button>`;
+  } else {
+    badge.textContent = '生徒'; badge.className = 's-role-badge student';
+    nameEl.textContent = currentUser.name;
+    subEl.textContent = currentUser.school || '志望校未設定';
+    nav.innerHTML = `
+      <button class="nav-item" onclick="goPage('s-dashboard')" id="nav-s-dashboard"><span class="nav-icon">🏠</span>マイ成績</button>
+      <button class="nav-item" onclick="goPage('s-addpe')" id="nav-s-addpe"><span class="nav-icon">✏️</span>過去問を記録</button>
+      <button class="nav-item" onclick="goPage('s-goals')" id="nav-s-goals"><span class="nav-icon">🎯</span>中期目標</button>
+      <button class="nav-item" onclick="goPage('s-comments')" id="nav-s-comments"><span class="nav-icon">💬</span>コメント・メモ</button>`;
+  }
+}
+
+let currentPage = '';
+function goPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  currentPage = name;
+  const renders = {
+    't-dashboard': renderTDashboard,
+    't-students': renderStudents,
+    't-pastexams': renderTPE,
+    't-goals': renderTGoals,
+    't-analysis': renderAnalysis,
+    't-report': renderReport,
+    's-dashboard': renderStuDashboard,
+    's-addpe': renderStuAddPE,
+    's-goals': renderStuGoals,
+    's-comments': renderStuComments,
+  };
+  renders[name]?.();
+}
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function sname(id) { return DB.students.find(s=>s.id===id)?.name||'不明'; }
+function scoreCell(score,max,pass) {
+  const cls = score>=pass?'sp-over':score>=pass*.9?'sp-close':'sp-far';
+  return `<span class="sp ${cls}">${score}<span style="font-size:10px;opacity:.6">/${max||'?'}</span></span>`;
+}
+function gapBadge(g) {
+  if (g>0) return `<span class="gap gap-p">+${g}</span>`;
+  if (g<0) return `<span class="gap gap-m">${g}</span>`;
+  return `<span class="gap gap-z">±0</span>`;
+}
+function toast(msg,type='ok') {
+  const el=document.getElementById('toast');
+  el.textContent=(type==='ok'?'✓ ':'✗ ')+msg;
+  el.className=`toast ${type} show`;
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeM(o.id);}));
+
+/* ══════════════════════════════════════════
+   TEACHER: DASHBOARD
+══════════════════════════════════════════ */
+function renderTDashboard() {
+  const pe = DB.pastExams;
+  const total = pe.length;
+  const avg = total ? Math.round(pe.reduce((a,b)=>a+b.score/b.max*100,0)/total) : 0;
+  const pass = pe.filter(p=>p.score>=p.pass).length;
+  const passRate = total ? Math.round(pass/total*100) : 0;
+  const avgGap = total ? Math.round(pe.reduce((a,b)=>a+(b.score-b.pass),0)/total) : 0;
+  document.getElementById('t-kpi').innerHTML = `
+    <div class="kpi"><div class="kpi-lbl">登録生徒</div><div class="kpi-val">${DB.students.length}</div><div class="kpi-sub">名</div></div>
+    <div class="kpi"><div class="kpi-lbl">平均得点率</div><div class="kpi-val">${avg}<span style="font-size:13px">%</span></div><div class="kpi-sub">全過去問</div></div>
+    <div class="kpi"><div class="kpi-lbl">合格ライン突破率</div><div class="kpi-val">${passRate}<span style="font-size:13px">%</span></div><div class="kpi-sub">${pass}/${total}件</div></div>
+    <div class="kpi"><div class="kpi-lbl">平均合否差</div><div class="kpi-val" style="${avgGap>=0?'color:var(--green)':'color:var(--red)'}">${avgGap>0?'+':''}${avgGap}</div><div class="kpi-sub">点</div></div>`;
+  const recent = [...pe].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+  document.getElementById('t-recent').innerHTML = recent.map(p=>`<tr>
+    <td style="font-weight:700">${sname(p.sid)}</td>
+    <td style="font-size:12px">${p.univ} <span class="muted">${p.dept||''}</span></td>
+    <td><span class="tag tag-i">${p.subj}</span></td>
+    <td class="muted">${p.year}</td>
+    <td>${scoreCell(p.score,p.max,p.pass)}</td>
+    <td>${gapBadge(p.score-p.pass)}</td>
+  </tr>`).join('')||'<tr><td colspan="6" class="empty">記録なし</td></tr>';
+
+  const subjs = [...new Set(pe.map(p=>p.subj))];
+  document.getElementById('t-subj-bars').innerHTML = subjs.map(s=>{
+    const sp=pe.filter(p=>p.subj===s);
+    const as=sp.reduce((a,b)=>a+b.score,0)/sp.length;
+    const ap=sp.reduce((a,b)=>a+b.pass,0)/sp.length;
+    const pct=Math.round(as/ap*100);
+    const col=pct>=100?'var(--green)':pct>=85?'var(--amber)':'var(--red)';
+    return `<div class="pb-row"><div class="pb-label" style="font-size:11px">${s}</div><div class="pb-track"><div class="pb-fill" style="width:${Math.min(pct,100)}%;background:${col}"></div></div><div class="pb-val" style="color:${col}">${pct}%</div></div>`;
+  }).join('')||'<div class="empty">データなし</div>';
+}
+
+/* ══════════════════════════════════════════
+   TEACHER: STUDENTS
+══════════════════════════════════════════ */
+function renderStudents() {
+  const grid = document.getElementById('stu-grid');
+  if (!DB.students.length) { grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">👤</div>生徒を追加してください</div>'; return; }
+  grid.innerHTML = DB.students.map(s=>{
+    const sp=DB.pastExams.filter(p=>p.sid===s.id);
+    const avg=sp.length?Math.round(sp.reduce((a,b)=>a+b.score/b.max*100,0)/sp.length):null;
+    const gCount=DB.goals.filter(g=>g.sid===s.id&&g.status!=='done').length;
+    return `<div class="stu-card">
+      <div class="flex ic jb mb3">
+        <div>
+          <div style="font-size:15px;font-weight:900;margin-bottom:2px">${s.name}</div>
+          <div style="font-size:11px;color:var(--indigo);font-weight:700">${s.school||'志望校未設定'}</div>
+        </div>
+        ${avg!==null?`<div style="text-align:right"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--amber)">${avg}%</div><div style="font-size:10px;color:var(--muted)">得点率</div></div>`:'<div class="muted" style="font-size:11px">記録なし</div>'}
+      </div>
+      <div class="flex g2 mb3" style="flex-wrap:wrap">
+        <span class="tag tag-b">${s.grade}</span>
+        <span class="tag tag-i">${s.year}年受験</span>
+        ${gCount>0?`<span class="tag" style="background:rgba(224,64,160,.1);color:var(--pink)">目標${gCount}件</span>`:''}
+      </div>
+      <div class="muted mb3">過去問${sp.length}件　担当: ${s.teacher||'-'}</div>
+      <div style="background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.18);border-radius:7px;padding:8px 10px;margin-bottom:12px;font-size:11px;">
+        🔑 ログインID: <b style="color:var(--amber)">${s.lid}</b>　PW: <b style="color:var(--amber)">${s.lpw}</b>
+      </div>
+      <div class="flex g2">
+        <button class="btn btn-ghost btn-sm" onclick="editStu(${s.id})">編集</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteStu(${s.id})">削除</button>
+        <button class="btn btn-indigo btn-sm" style="margin-left:auto" onclick="openGoalModal(${s.id})">＋ 目標</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let editStuId=null;
+function openStuModal(id=null) {
+  editStuId=id;
+  const s=id?DB.students.find(s=>s.id===id):null;
+  document.getElementById('sm-title').textContent=id?'生徒情報を編集':'生徒を追加';
+  ['name','school','year','teacher','note','lid','lpw'].forEach(k=>{
+    document.getElementById('sm-'+k).value=s?.[k]||'';
+  });
+  if(s) document.getElementById('sm-grade').value=s.grade||'高校3年';
+  document.getElementById('modal-stu').classList.add('open');
+}
+function editStu(id){openStuModal(id);}
+function saveStu() {
+  const name=document.getElementById('sm-name').value.trim();
+  const lid=document.getElementById('sm-lid').value.trim();
+  const lpw=document.getElementById('sm-lpw').value.trim();
+  if(!name||!lid||!lpw){toast('氏名・ログインID・パスワードは必須です','ng');return;}
+  const data={name,school:document.getElementById('sm-school').value,grade:document.getElementById('sm-grade').value,year:document.getElementById('sm-year').value,teacher:document.getElementById('sm-teacher').value,note:document.getElementById('sm-note').value,lid,lpw};
+  if(editStuId) { Object.assign(DB.students.find(s=>s.id===editStuId),data); toast('更新しました'); }
+  else { DB.students.push({id:Date.now(),...data}); toast('生徒を追加しました'); }
+  save(); closeM('modal-stu'); renderStudents(); refreshAllSelects();
+}
+function deleteStu(id) {
+  if(!confirm('この生徒と全関連データを削除しますか？'))return;
+  DB.students=DB.students.filter(s=>s.id!==id);
+  DB.pastExams=DB.pastExams.filter(p=>p.sid!==id);
+  DB.goals=DB.goals.filter(g=>g.sid!==id);
+  DB.comments=DB.comments.filter(c=>c.sid!==id);
+  save(); renderStudents(); refreshAllSelects(); toast('削除しました');
+}
+
+/* ══════════════════════════════════════════
+   TEACHER: PAST EXAMS
+══════════════════════════════════════════ */
+function renderTPE() {
+  const fs=document.getElementById('t-pe-fs').value;
+  const fsub=document.getElementById('t-pe-fsub').value;
+  let list=[...DB.pastExams].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(fs) list=list.filter(p=>p.sid==fs);
+  if(fsub) list=list.filter(p=>p.subj===fsub);
+
+  const total=list.length, passC=list.filter(p=>p.score>=p.pass).length;
+  const avgGap=total?(list.reduce((a,b)=>a+(b.score-b.pass),0)/total).toFixed(1):0;
+  document.getElementById('t-pe-summary').innerHTML=`
+    <div class="card" style="padding:14px 18px"><div class="kpi-lbl">件数</div><div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--blue)">${total}</div></div>
+    <div class="card" style="padding:14px 18px"><div class="kpi-lbl">合格ライン突破</div><div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--green)">${passC}<span style="font-size:12px;color:var(--muted)">/${total}</span></div></div>
+    <div class="card" style="padding:14px 18px"><div class="kpi-lbl">平均合否差</div><div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:${parseFloat(avgGap)>=0?'var(--green)':'var(--red)'}">${avgGap>0?'+':''}${avgGap}</div></div>`;
+
+  // Refresh subject filter
+  const subs=[...new Set(DB.pastExams.map(p=>p.subj))];
+  const ps=document.getElementById('t-pe-fsub'), pv=ps.value;
+  ps.innerHTML='<option value="">全科目</option>'+subs.map(s=>`<option ${s===pv?'selected':''}>${s}</option>`).join('');
+
+  document.getElementById('t-pe-tbody').innerHTML=list.length?list.map(p=>`<tr>
+    <td style="font-weight:700">${sname(p.sid)}</td>
+    <td><div style="font-size:13px;font-weight:700">${p.univ}</div><div class="muted">${p.dept||''}</div></td>
+    <td><span class="tag tag-i">${p.subj}</span></td>
+    <td class="muted" style="font-family:'JetBrains Mono',monospace;font-size:12px">${p.year}</td>
+    <td>${scoreCell(p.score,p.max,p.pass)}</td>
+    <td class="muted">${p.avg!=null?p.avg:'—'}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${p.pass}</td>
+    <td>${gapBadge(p.score-p.pass)}</td>
+    <td style="font-size:12px;color:var(--text2);max-width:160px;white-space:normal">${p.comment||'—'}</td>
+    <td><div class="flex g2"><button class="btn btn-ghost btn-sm" onclick="editPEById(${p.id})">編集</button><button class="btn btn-danger btn-sm" onclick="deletePE(${p.id})">削除</button></div></td>
+  </tr>`).join(''):'<tr><td colspan="10"><div class="empty"><div class="ei">📄</div>記録なし</div></td></tr>';
+}
+
+let editPEId=null;
+function openPEModal(sidPreset=null) {
+  editPEId=null;
+  document.getElementById('pm-title').textContent='過去問記録を追加';
+  refreshPMStuSel();
+  if(sidPreset) document.getElementById('pm-stu').value=sidPreset;
+  ['univ','dept','year','comment'].forEach(k=>document.getElementById('pm-'+k).value='');
+  document.getElementById('pm-score').value=''; document.getElementById('pm-max').value='100';
+  document.getElementById('pm-avg').value=''; document.getElementById('pm-pass').value='';
+  document.getElementById('pm-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('modal-pe').classList.add('open');
+}
+function editPEById(id) {
+  const p=DB.pastExams.find(p=>p.id===id); editPEId=id;
+  document.getElementById('pm-title').textContent='記録を編集';
+  refreshPMStuSel();
+  document.getElementById('pm-stu').value=p.sid;
+  document.getElementById('pm-univ').value=p.univ; document.getElementById('pm-dept').value=p.dept||'';
+  document.getElementById('pm-subj').value=p.subj; document.getElementById('pm-year').value=p.year;
+  document.getElementById('pm-date').value=p.date; document.getElementById('pm-score').value=p.score;
+  document.getElementById('pm-max').value=p.max||100; document.getElementById('pm-avg').value=p.avg??'';
+  document.getElementById('pm-pass').value=p.pass; document.getElementById('pm-comment').value=p.comment||'';
+  document.getElementById('modal-pe').classList.add('open');
+}
+function savePE() {
+  const score=parseFloat(document.getElementById('pm-score').value);
+  const pass=parseFloat(document.getElementById('pm-pass').value);
+  const univ=document.getElementById('pm-univ').value.trim();
+  if(!univ||isNaN(score)||isNaN(pass)){toast('大学名・得点・合格点は必須','ng');return;}
+  const data={sid:parseInt(document.getElementById('pm-stu').value),univ,dept:document.getElementById('pm-dept').value,subj:document.getElementById('pm-subj').value,year:document.getElementById('pm-year').value,date:document.getElementById('pm-date').value,score,max:parseFloat(document.getElementById('pm-max').value)||100,avg:document.getElementById('pm-avg').value!==''?parseFloat(document.getElementById('pm-avg').value):null,pass,comment:document.getElementById('pm-comment').value};
+  if(editPEId){Object.assign(DB.pastExams.find(p=>p.id===editPEId),data);toast('更新しました');}
+  else{DB.pastExams.push({id:Date.now(),...data});toast('追加しました');}
+  save(); closeM('modal-pe'); renderTPE();
+}
+function deletePE(id){if(!confirm('削除しますか？'))return;DB.pastExams=DB.pastExams.filter(p=>p.id!==id);save();renderTPE();toast('削除しました');}
+
+/* ══════════════════════════════════════════
+   TEACHER: GOALS
+══════════════════════════════════════════ */
+function renderTGoals() {
+  const fs=document.getElementById('t-g-fs').value;
+  const list=fs?DB.students.filter(s=>s.id==fs):DB.students;
+  const content=document.getElementById('t-goals-content');
+  if(!list.length){content.innerHTML='<div class="empty"><div class="ei">🎯</div>生徒を選択</div>';return;}
+  content.innerHTML=list.map(s=>{
+    const sg=DB.goals.filter(g=>g.sid===s.id);
+    const wip=sg.filter(g=>g.status==='wip').length, done=sg.filter(g=>g.status==='done').length, todo=sg.filter(g=>g.status==='todo').length;
+    return `<div class="card mb4">
+      <div class="flex ic jb mb4">
+        <div><div style="font-size:15px;font-weight:900">${s.name}</div><div style="font-size:11px;color:var(--indigo);margin-top:2px">${s.school||''}</div></div>
+        <div class="flex g3 ic">
+          <div style="font-size:12px;color:var(--muted)">進行中 <b style="color:var(--amber)">${wip}</b>　達成 <b style="color:var(--green)">${done}</b>　未着手 <b style="color:var(--muted)">${todo}</b></div>
+          <button class="btn btn-amber btn-sm no-print" onclick="openGoalModal(${s.id})">＋ 目標追加</button>
+        </div>
+      </div>
+      ${sg.length?sg.map(g=>goalItem(g,true)).join(''):'<div class="muted" style="padding:8px 0">目標なし</div>'}
+    </div>`;
+  }).join('');
+}
+
+function goalItem(g,editable=false) {
+  const cls={done:'gdone',wip:'gwip',todo:'gtodo'}[g.status];
+  const lbl={done:'達成',wip:'進行中',todo:'未着手'}[g.status];
+  const tcol={'科目強化':'tag-b','模試目標':'tag-i','過去問目標':'tag-g','学習習慣':'tag-i','弱点克服':'tag-i','その他':'tag-b'}[g.type]||'tag-b';
+  return `<div class="goal-item ${cls}">
+    <div class="gdot"></div>
+    <div style="flex:1">
+      <div class="flex ic g2 mb3"><span class="tag ${tcol}" style="font-size:10px">${g.type}</span><span class="gbadge">${lbl}</span></div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">${g.text}</div>
+      ${g.note?`<div style="font-size:11px;color:var(--muted);margin-top:3px">📝 ${g.note}</div>`:''}
+      ${g.deadline?`<div style="font-size:11px;color:var(--muted);margin-top:2px">📅 期限: ${g.deadline}</div>`:''}
+    </div>
+    ${editable?`<div class="flex g2 no-print"><button class="btn btn-ghost btn-sm" onclick="editGoal(${g.id})">編集</button><button class="btn btn-danger btn-sm" onclick="deleteGoal(${g.id})">削除</button></div>`:''}
+  </div>`;
+}
+
+let editGoalId=null;
+function openGoalModal(sidPreset=null) {
+  editGoalId=null;
+  document.getElementById('gm-title').textContent='中期目標を追加';
+  refreshGMStuSel();
+  if(sidPreset) document.getElementById('gm-stu').value=sidPreset;
+  document.getElementById('gm-type').value='科目強化';
+  document.getElementById('gm-text').value=''; document.getElementById('gm-deadline').value='';
+  document.getElementById('gm-status').value='todo'; document.getElementById('gm-note').value='';
+  document.getElementById('modal-goal').classList.add('open');
+}
+function editGoal(id) {
+  const g=DB.goals.find(g=>g.id===id); editGoalId=id;
+  document.getElementById('gm-title').textContent='目標を編集';
+  refreshGMStuSel();
+  document.getElementById('gm-stu').value=g.sid; document.getElementById('gm-type').value=g.type;
+  document.getElementById('gm-text').value=g.text; document.getElementById('gm-deadline').value=g.deadline||'';
+  document.getElementById('gm-status').value=g.status; document.getElementById('gm-note').value=g.note||'';
+  document.getElementById('modal-goal').classList.add('open');
+}
+function saveGoal() {
+  const text=document.getElementById('gm-text').value.trim();
+  if(!text){toast('目標内容を入力してください','ng');return;}
+  const data={sid:parseInt(document.getElementById('gm-stu').value),type:document.getElementById('gm-type').value,text,deadline:document.getElementById('gm-deadline').value,status:document.getElementById('gm-status').value,note:document.getElementById('gm-note').value};
+  if(editGoalId){Object.assign(DB.goals.find(g=>g.id===editGoalId),data);toast('更新しました');}
+  else{DB.goals.push({id:Date.now(),...data});toast('追加しました');}
+  save(); closeM('modal-goal'); renderTGoals();
+}
+function deleteGoal(id){if(!confirm('削除しますか？'))return;DB.goals=DB.goals.filter(g=>g.id!==id);save();renderTGoals();toast('削除しました');}
+
+/* ══════════════════════════════════════════
+   TEACHER: ANALYSIS
+══════════════════════════════════════════ */
+let charts={};
+function kc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+const CD={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#636882',font:{size:11}}}}};
+function msc(){return{x:{ticks:{color:'#636882',font:{size:11}},grid:{color:'#1e2230'}},y:{ticks:{color:'#636882',font:{size:11}},grid:{color:'#1e2230'}}};}
+
+function renderAnalysis() {
+  const fs=document.getElementById('t-ana-fs').value;
+  const pe=fs?DB.pastExams.filter(p=>p.sid==fs):DB.pastExams;
+
+  kc('c-subj');
+  const subjs=[...new Set(pe.map(p=>p.subj))];
+  charts['c-subj']=new Chart(document.getElementById('c-subj'),{type:'bar',data:{labels:subjs,datasets:[
+    {label:'平均得点',data:subjs.map(s=>{const sp=pe.filter(p=>p.subj===s);return Math.round(sp.reduce((a,b)=>a+b.score,0)/sp.length);}),backgroundColor:'rgba(78,201,240,.7)',borderRadius:5,borderSkipped:false},
+    {label:'合格ライン平均',data:subjs.map(s=>{const sp=pe.filter(p=>p.subj===s);return Math.round(sp.reduce((a,b)=>a+b.pass,0)/sp.length);}),backgroundColor:'rgba(242,97,122,.45)',borderRadius:5,borderSkipped:false},
+    {label:'過去の平均点',data:subjs.map(s=>{const sp=pe.filter(p=>p.subj===s&&p.avg!=null);return sp.length?Math.round(sp.reduce((a,b)=>a+b.avg,0)/sp.length):null;}),backgroundColor:'rgba(245,200,66,.45)',borderRadius:5,borderSkipped:false},
+  ]},options:{...CD,scales:msc()}});
+
+  kc('c-trend');
+  const sorted=[...pe].sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-12);
+  charts['c-trend']=new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:sorted.map(p=>`${p.subj}(${p.year})`),datasets:[
+    {label:'合否差',data:sorted.map(p=>p.score-p.pass),borderColor:'#3dd68c',backgroundColor:'rgba(61,214,140,.07)',borderWidth:2,fill:true,tension:.35,pointBackgroundColor:'#3dd68c',pointRadius:4},
+    {label:'±0',data:sorted.map(()=>0),borderColor:'rgba(242,97,122,.4)',borderDash:[5,5],borderWidth:1,pointRadius:0},
+  ]},options:{...CD,scales:msc()}});
+
+  kc('c-univ');
+  const univs=[...new Set(pe.map(p=>p.univ))];
+  charts['c-univ']=new Chart(document.getElementById('c-univ'),{type:'bar',data:{labels:univs,datasets:[{label:'突破率(%)',data:univs.map(u=>{const up=pe.filter(p=>p.univ===u);return Math.round(up.filter(p=>p.score>=p.pass).length/up.length*100);}),backgroundColor:univs.map(u=>{const up=pe.filter(p=>p.univ===u);const r=up.filter(p=>p.score>=p.pass).length/up.length*100;return r>=80?'rgba(61,214,140,.7)':r>=50?'rgba(245,200,66,.7)':'rgba(242,97,122,.7)';}),borderRadius:5,borderSkipped:false}]},options:{...CD,plugins:{legend:{display:false}},scales:{...msc(),y:{min:0,max:100,ticks:{color:'#636882',font:{size:11}},grid:{color:'#1e2230'}}}}});
+
+  kc('c-dist');
+  const pcts=pe.map(p=>Math.round(p.score/p.max*100));
+  const bins=[0,20,40,60,80,100];
+  const hist=bins.slice(0,-1).map((b,i)=>pcts.filter(v=>v>=b&&v<bins[i+1]).length);
+  hist[hist.length-1]+=pcts.filter(v=>v===100).length;
+  charts['c-dist']=new Chart(document.getElementById('c-dist'),{type:'bar',data:{labels:bins.slice(0,-1).map((b,i)=>`${b}〜${bins[i+1]-1}%`),datasets:[{data:hist,backgroundColor:['rgba(242,97,122,.7)','rgba(242,97,122,.5)','rgba(245,200,66,.7)','rgba(61,214,140,.5)','rgba(61,214,140,.8)'],borderRadius:4,borderSkipped:false}]},options:{...CD,plugins:{legend:{display:false}},scales:msc()}});
+}
+
+/* ══════════════════════════════════════════
+   TEACHER: COMMENTS
+══════════════════════════════════════════ */
+function openTCommentModal() {
+  refreshTCStuSel();
+  document.getElementById('tc-body').value='';
+  document.getElementById('modal-tcomment').classList.add('open');
+}
+function saveTComment() {
+  const body=document.getElementById('tc-body').value.trim();
+  const sid=parseInt(document.getElementById('tc-stu').value);
+  if(!body){toast('コメントを入力してください','ng');return;}
+  DB.comments.push({id:Date.now(),sid,role:'teacher',name:'講師',body,date:new Date().toISOString().split('T')[0]});
+  save(); closeM('modal-tcomment'); toast('コメントを送信しました');
+}
+
+/* ══════════════════════════════════════════
+   TEACHER: REPORT
+══════════════════════════════════════════ */
+function renderReport() {
+  const fs=document.getElementById('t-rep-fs').value;
+  const targets=fs?DB.students.filter(s=>s.id==fs):DB.students;
+  const now=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+  let html=`<div style="background:linear-gradient(135deg,rgba(124,131,211,.08),rgba(245,200,66,.04));border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:20px">
+    <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">受験生 学習成績レポート</div>
+    <div style="font-size:20px;font-weight:900;margin-bottom:4px">Academic Performance Report</div>
+    <div style="font-size:12px;color:var(--text2)">出力日: ${now}　生徒数: ${DB.students.length}名　過去問: ${DB.pastExams.length}件</div>
+  </div>`;
+
+  targets.forEach(s=>{
+    const sp=DB.pastExams.filter(p=>p.sid===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const sg=DB.goals.filter(g=>g.sid===s.id);
+    const avgR=sp.length?Math.round(sp.reduce((a,b)=>a+b.score/b.max*100,0)/sp.length):null;
+    const passC=sp.filter(p=>p.score>=p.pass).length;
+    const avgGap=sp.length?(sp.reduce((a,b)=>a+(b.score-b.pass),0)/sp.length).toFixed(1):null;
+    html+=`<div class="card mb4">
+      <div class="flex ic jb mb4">
+        <div>
+          <div style="font-size:18px;font-weight:900">${s.name}</div>
+          <div style="color:var(--indigo);font-size:12px;font-weight:700;margin-top:2px">${s.school||''} ${s.grade}　${s.year}年受験</div>
+          ${s.teacher?`<div style="font-size:11px;color:var(--muted);margin-top:2px">担当: ${s.teacher}</div>`:''}
+        </div>
+        <div class="flex g3" style="text-align:center">
+          <div><div style="font-size:10px;color:var(--muted)">平均得点率</div><div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--amber)">${avgR!==null?avgR+'%':'—'}</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">平均合否差</div><div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:${parseFloat(avgGap)>=0?'var(--green)':'var(--red)'}">${avgGap!==null?(avgGap>0?'+':'')+avgGap:'—'}</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">突破率</div><div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--blue)">${sp.length?passC+'/'+sp.length:'—'}</div></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">📄 過去問記録</div>
+      ${sp.length?`<div class="tbl-wrap"><table><thead><tr><th>大学・学部</th><th>科目</th><th>年度</th><th>得点</th><th>平均点</th><th>合格点</th><th>差</th><th>日付</th></tr></thead><tbody>
+      ${sp.map(p=>`<tr><td><div style="font-weight:700">${p.univ}</div><div class="muted">${p.dept||''}</div></td><td><span class="tag tag-i">${p.subj}</span></td><td style="font-family:'JetBrains Mono',monospace;font-size:11px">${p.year}</td><td>${scoreCell(p.score,p.max,p.pass)}</td><td class="muted">${p.avg!=null?p.avg:'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${p.pass}</td><td>${gapBadge(p.score-p.pass)}</td><td class="muted" style="font-size:11px">${p.date}</td></tr>`).join('')}
+      </tbody></table></div>`:'<div class="muted" style="padding:6px 0">記録なし</div>'}
+      ${sg.length?`<div class="divider"></div><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">🎯 中期目標</div>${sg.map(g=>goalItem(g,false)).join('')}`:''}
+    </div>`;
+  });
+  document.getElementById('t-report-content').innerHTML=html;
+}
+
+/* ══════════════════════════════════════════
+   STUDENT VIEWS
+══════════════════════════════════════════ */
+function renderStuDashboard() {
+  const s=currentUser;
+  const sp=DB.pastExams.filter(p=>p.sid===s.id);
+  const avgR=sp.length?Math.round(sp.reduce((a,b)=>a+b.score/b.max*100,0)/sp.length):null;
+  const passC=sp.filter(p=>p.score>=p.pass).length;
+  const avgGap=sp.length?(sp.reduce((a,b)=>a+(b.score-b.pass),0)/sp.length).toFixed(1):null;
+
+  document.getElementById('s-welcome').innerHTML=`
+    <div class="stu-welcome-name">こんにちは、${s.name}さん 👋</div>
+    <div class="stu-welcome-sub">志望校: ${s.school||'未設定'}　${s.grade}　${s.year}年受験</div>
+    <div class="stu-welcome-score">
+      <div style="font-size:10px;color:var(--muted)">全体得点率</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--green)">${avgR!==null?avgR+'%':'—'}</div>
+    </div>`;
+
+  document.getElementById('s-kpi').innerHTML=`
+    <div class="kpi"><div class="kpi-lbl">過去問件数</div><div class="kpi-val">${sp.length}</div><div class="kpi-sub">件</div></div>
+    <div class="kpi"><div class="kpi-lbl">平均得点率</div><div class="kpi-val">${avgR!==null?avgR:'—'}<span style="font-size:13px">%</span></div></div>
+    <div class="kpi"><div class="kpi-lbl">合格ライン突破</div><div class="kpi-val">${passC}<span style="font-size:13px">/${sp.length}</span></div></div>
+    <div class="kpi"><div class="kpi-lbl">平均合否差</div><div class="kpi-val" style="${parseFloat(avgGap)>=0?'color:var(--green)':'color:var(--red)'}">${avgGap!==null?(avgGap>0?'+':'')+avgGap:'—'}</div></div>`;
+
+  const sorted=[...sp].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('s-pe-tbody').innerHTML=sorted.length?sorted.map(p=>`<tr>
+    <td><div style="font-weight:700">${p.univ}</div><div class="muted">${p.dept||''}</div></td>
+    <td><span class="tag tag-i">${p.subj}</span></td>
+    <td class="muted" style="font-family:'JetBrains Mono',monospace;font-size:12px">${p.year}</td>
+    <td>${scoreCell(p.score,p.max,p.pass)}</td>
+    <td class="muted">${p.avg!=null?p.avg:'—'}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${p.pass}</td>
+    <td>${gapBadge(p.score-p.pass)}</td>
+    <td class="muted" style="font-size:12px">${p.date}</td>
+  </tr>`).join(''):'<tr><td colspan="8"><div class="empty"><div class="ei">📄</div>記録なし</div></td></tr>';
+
+  const subjs=[...new Set(sp.map(p=>p.subj))];
+  document.getElementById('s-subj-bars').innerHTML=subjs.map(s=>{
+    const sub=sp.filter(p=>p.subj===s);
+    const as=sub.reduce((a,b)=>a+b.score,0)/sub.length;
+    const ap=sub.reduce((a,b)=>a+b.pass,0)/sub.length;
+    const pct=Math.round(as/ap*100);
+    const col=pct>=100?'var(--green)':pct>=85?'var(--amber)':'var(--red)';
+    return `<div class="pb-row"><div class="pb-label" style="font-size:11px">${s}</div><div class="pb-track"><div class="pb-fill" style="width:${Math.min(pct,100)}%;background:${col}"></div></div><div class="pb-val" style="color:${col}">${pct}%</div></div>`;
+  }).join('')||'<div class="muted" style="padding:8px 0">記録なし</div>';
+}
+
+function renderStuAddPE() {
+  const s=currentUser;
+  document.getElementById('s-p-date').value=new Date().toISOString().split('T')[0];
+  const sp=DB.pastExams.filter(p=>p.sid===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+  document.getElementById('s-myrecords').innerHTML=sp.length?sp.map(p=>`<tr>
+    <td style="font-weight:700">${p.univ}</td>
+    <td><span class="tag tag-i">${p.subj}</span></td>
+    <td class="muted" style="font-size:12px">${p.year}</td>
+    <td>${scoreCell(p.score,p.max,p.pass)}</td>
+    <td>${gapBadge(p.score-p.pass)}</td>
+    <td class="muted" style="font-size:12px">${p.date}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteStuPE(${p.id})">削除</button></td>
+  </tr>`).join(''):'<tr><td colspan="7"><div class="empty" style="padding:24px">記録なし</div></td></tr>';
+}
+function saveStuPE() {
+  const score=parseFloat(document.getElementById('s-p-score').value);
+  const pass=parseFloat(document.getElementById('s-p-pass').value);
+  const univ=document.getElementById('s-p-univ').value.trim();
+  if(!univ||isNaN(score)||isNaN(pass)){toast('大学名・得点・合格点は必須です','ng');return;}
+  DB.pastExams.push({id:Date.now(),sid:currentUser.id,univ,dept:document.getElementById('s-p-dept').value,subj:document.getElementById('s-p-subject').value,year:document.getElementById('s-p-year').value,date:document.getElementById('s-p-date').value,score,max:parseFloat(document.getElementById('s-p-max').value)||100,avg:document.getElementById('s-p-avg').value!==''?parseFloat(document.getElementById('s-p-avg').value):null,pass,comment:document.getElementById('s-p-comment').value});
+  save();
+  // Clear form
+  ['s-p-univ','s-p-dept','s-p-year','s-p-score','s-p-avg','s-p-pass','s-p-comment'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('s-p-max').value='100';
+  toast('記録を保存しました'); renderStuAddPE();
+}
+function deleteStuPE(id){if(!confirm('削除しますか？'))return;DB.pastExams=DB.pastExams.filter(p=>p.id!==id);save();renderStuAddPE();toast('削除しました');}
+
+function renderStuGoals() {
+  const sg=DB.goals.filter(g=>g.sid===currentUser.id);
+  const content=document.getElementById('s-goals-content');
+  const wip=sg.filter(g=>g.status==='wip').length,done=sg.filter(g=>g.status==='done').length,todo=sg.filter(g=>g.status==='todo').length;
+  content.innerHTML=`<div style="background:rgba(61,214,140,.05);border:1px solid rgba(61,214,140,.15);border-radius:12px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:14px;font-weight:700">先生から設定された目標</div>
+    <div style="font-size:13px;color:var(--text2)">進行中 <b style="color:var(--amber)">${wip}</b>　達成 <b style="color:var(--green)">${done}</b>　未着手 <b style="color:var(--muted)">${todo}</b></div>
+  </div>
+  ${sg.length?sg.map(g=>goalItem(g,false)).join(''):'<div class="empty"><div class="ei">🎯</div>目標がまだ設定されていません<br><span style="font-size:12px">講師に相談してみましょう</span></div>'}`;
+}
+
+function renderStuComments() {
+  const sc=DB.comments.filter(c=>c.sid===currentUser.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('s-comment-list').innerHTML=sc.length?sc.map(c=>`<div class="comment-item">
+    <div class="comment-meta">
+      <span class="${c.role==='teacher'?'comment-role-t':'comment-role-s'}">${c.role==='teacher'?'👨‍🏫 '+c.name:'🎓 '+c.name}</span>
+      <span>${c.date}</span>
+      ${c.role==='student'?`<button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="deleteStuComment(${c.id})">削除</button>`:''}
+    </div>
+    <div class="comment-body">${c.body}</div>
+  </div>`).join(''):'<div class="empty"><div class="ei">💬</div>コメントなし</div>';
+}
+function addStuComment() {
+  const body=document.getElementById('s-comment-input').value.trim();
+  if(!body){toast('コメントを入力してください','ng');return;}
+  DB.comments.push({id:Date.now(),sid:currentUser.id,role:'student',name:currentUser.name,body,date:new Date().toISOString().split('T')[0]});
+  document.getElementById('s-comment-input').value='';
+  save(); renderStuComments(); toast('投稿しました');
+}
+function deleteStuComment(id){if(!confirm('削除しますか？'))return;DB.comments=DB.comments.filter(c=>c.id!==id);save();renderStuComments();toast('削除しました');}
+
+/* ══════════════════════════════════════════
+   SELECT REFRESH
+══════════════════════════════════════════ */
+function refreshAllSelects() {
+  const opts=DB.students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  ['t-pe-fs','t-g-fs','t-ana-fs','t-rep-fs'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const v=el.value; el.innerHTML='<option value="">全生徒</option>'+opts; el.value=v;
+  });
+  refreshPMStuSel(); refreshGMStuSel(); refreshTCStuSel();
+}
+function refreshPMStuSel(){document.getElementById('pm-stu').innerHTML=DB.students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');}
+function refreshGMStuSel(){document.getElementById('gm-stu').innerHTML=DB.students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');}
+function refreshTCStuSel(){document.getElementById('tc-stu').innerHTML=DB.students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');}
+</script>
+</body>
+</html>
